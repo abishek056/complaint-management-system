@@ -1,0 +1,71 @@
+db.sqlite3
+venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+
+# Environment and secrets
+.env
+.env.*
+*.env
+secrets.json
+credentials.json
+credentials/
+aws_credentials
+aws_credentials/*
+
+# Private keys and certificates
+*.key
+*.pem
+*.p12
+*.jks
+id_rsa
+id_rsa.pub
+
+# Database files
+*.sqlite3
+*.sqlite
+*.db
+*.sqlite-journal
+
+# Logs and caches
+*.log
+logs/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.cache/
+
+# Virtual envs / packaging
+.venv/
+env/
+venv/
+pip-wheel-metadata/
+*.egg-info/
+dist/
+build/
+
+# OS & editors
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.bak
+Thumbs.db
+
+# Node
+node_modules/
+
+# Terraform
+.terraform/
+terraform.tfstate
+terraform.tfstate.*
+
+# Misc
+*.pyc
+__pypackages__/
+coverage/
+.secret
+secrets/

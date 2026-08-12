@@ -1,0 +1,36 @@
+/* Dashboard specific styles */
+
+.stat-card .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.bg-primary-subtle { background-color: #dbeafe; }
+.bg-warning-subtle { background-color: #fef3c7; }
+.bg-info-subtle { background-color: #e0f2fe; }
+.bg-success-subtle { background-color: #dcfce7; }
+
+.stat-box {
+    padding: 1.5rem;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+/* Simple bar visualization for priority */
+.priority-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--border);
+    overflow: hidden;
+}
+
+.priority-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+}
