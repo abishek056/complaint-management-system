@@ -28,13 +28,15 @@ from .forms import (
 
 
 def get_user_role(user):
-    """Return the role string for a user, creating a Profile if missing."""
+    """Return the role string for a user."""
     if not user.is_authenticated:
         return None
     if user.is_superuser:
         return 'admin'
-    profile, _ = Profile.objects.get_or_create(user=user, defaults={'role': 'user'})
-    return profile.role
+    try:
+        return user.profile.role
+    except Profile.DoesNotExist:
+        return 'user'
 
 
 class HomeView(TemplateView):
@@ -237,10 +239,29 @@ class ComplaintDetailView(LoginRequiredMixin, DetailView):
         context['is_staff_or_admin'] = role in ('staff', 'admin') or self.request.user.is_superuser
         if context['is_staff_or_admin']:
             context['assign_form'] = AssignComplaintForm(instance=self.object)
-            context['comments'] = self.object.comments.all()
+            comments = list(self.object.comments.all())
         else:
-            context['comments'] = self.object.comments.filter(is_internal=False)
-        context['history'] = self.object.status_history.all()[:15]
+            comments = list(self.object.comments.filter(is_internal=False))
+        history = list(self.object.status_history.all()[:15])
+
+        # Hide the complainant's real identity: attach a safe display name
+        # to each comment/history entry instead of exposing the username.
+        complainant_id = self.object.submitted_by_id
+        for c in comments:
+            if c.author_id == complainant_id:
+                c.display_author = 'Complainant'
+            else:
+                c.display_author = c.author.get_full_name() or c.author.username
+        for h in history:
+            if h.changed_by_id is None:
+                h.display_actor = 'System'
+            elif h.changed_by_id == complainant_id:
+                h.display_actor = 'Complainant'
+            else:
+                h.display_actor = h.changed_by.get_full_name() or h.changed_by.username
+
+        context['comments'] = comments
+        context['history'] = history
         return context
 
     def post(self, request, *args, **kwargs):
@@ -443,7 +464,7 @@ class ExportComplaintsCSV(LoginRequiredMixin, UserPassesTestMixin, View):
         writer = csv.writer(response)
         writer.writerow([
             'Complaint ID', 'Title', 'Category', 'Priority', 'Status',
-            'Submitted By', 'Assigned To', 'Created At', 'Updated At'
+            'Assigned To', 'Created At', 'Updated At'
         ])
         for c in Complaint.objects.select_related('category', 'submitted_by', 'assigned_to'):
             writer.writerow([
@@ -452,7 +473,6 @@ class ExportComplaintsCSV(LoginRequiredMixin, UserPassesTestMixin, View):
                 c.category.name if c.category else '',
                 c.get_priority_display(),
                 c.get_status_display(),
-                c.submitted_by.username,
                 c.assigned_to.username if c.assigned_to else '',
                 c.created_at.strftime('%Y-%m-%d %H:%M'),
                 c.updated_at.strftime('%Y-%m-%d %H:%M'),
