@@ -315,10 +315,19 @@ class ComplaintDetailView(LoginRequiredMixin, DetailView):
         return redirect('complaint_detail', pk=self.object.pk)
 
 
-class ComplaintCreateView(LoginRequiredMixin, CreateView):
+class ComplaintCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Complaint
     form_class = ComplaintForm
     template_name = 'complaints/complaint_form.html'
+
+    def test_func(self):
+        # Admins manage/resolve complaints; they should not be able to
+        # register new complaints from their own account.
+        return get_user_role(self.request.user) != 'admin'
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'Admins cannot submit new complaints.')
+        return redirect('dashboard')
 
     def form_valid(self, form):
         form.instance.submitted_by = self.request.user

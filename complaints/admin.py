@@ -75,6 +75,12 @@ class ComplaintAdmin(admin.ModelAdmin):
         return obj.complaint_id
     complaint_id_display.short_description = 'ID'
 
+    def has_add_permission(self, request):
+        # Complaints must only be created through the normal "New Complaint"
+        # form in the app (by the submitting user), never from the Django
+        # admin panel — even by staff/superusers.
+        return False
+
     @admin.action(description='Mark selected as Resolved')
     def mark_resolved(self, request, queryset):
         queryset.update(status='resolved')
@@ -98,4 +104,4 @@ class StatusHistoryAdmin(admin.ModelAdmin):
 # Admin site branding
 admin.site.site_header = 'Complaint Management System'
 admin.site.site_title = 'CMS Admin'
-admin.site.index_title = 'Administration'
+admin.site.index_title = 'Administration'     
