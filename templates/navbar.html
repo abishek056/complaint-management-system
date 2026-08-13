@@ -1,63 +1,101 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top shadow-sm">
+<nav class="navbar sticky-top">
     <div class="container">
         <a class="navbar-brand fw-bold" href="{% url 'home' %}">
             <i class="fas fa-headset me-2"></i>CMS
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+
+        <button class="navbar-toggler" type="button" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
+
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 {% if user.is_authenticated %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a>
+                    <a class="nav-link" href="{% url 'dashboard' %}">
+                        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'complaint_list' %}"><i class="fas fa-list me-1"></i> Complaints</a>
+                    <a class="nav-link" href="{% url 'complaint_list' %}">
+                        <i class="fas fa-list me-1"></i> Complaints
+                    </a>
                 </li>
                 {% if not user.is_superuser and user.profile.role != 'admin' and user.profile.role != 'staff' %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'complaint_create' %}"><i class="fas fa-plus-circle me-1"></i> New Complaint</a>
+                    <a class="nav-link" href="{% url 'complaint_create' %}">
+                        <i class="fas fa-plus-circle me-1"></i> New Complaint
+                    </a>
                 </li>
                 {% endif %}
                 {% if user.is_superuser or user.profile.role == 'admin' %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'admin_dashboard' %}"><i class="fas fa-chart-line me-1"></i> Admin</a>
+                    <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                        <i class="fas fa-chart-line me-1"></i> Admin
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'category_list' %}"><i class="fas fa-tags me-1"></i> Categories</a>
+                    <a class="nav-link" href="{% url 'category_list' %}">
+                        <i class="fas fa-tags me-1"></i> Categories
+                    </a>
                 </li>
                 {% endif %}
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'home' %}"><i class="fas fa-home me-1"></i> Home</a>
+                    <a class="nav-link" href="{% url 'home' %}">
+                        <i class="fas fa-home me-1"></i> Home
+                    </a>
                 </li>
                 {% endif %}
             </ul>
+
             <ul class="navbar-nav">
+                <!-- Theme toggle -->
+                <li class="nav-item d-flex align-items-center me-2">
+                    <button type="button" class="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
+                        <i class="fas fa-moon moon-icon"></i>
+                        <i class="fas fa-sun sun-icon"></i>
+                    </button>
+                </li>
+
                 {% if user.is_authenticated %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-user-circle me-1"></i> {{ user.get_full_name|default:user.username }}
+                    <a class="nav-link dropdown-toggle" href="#" role="button">
+                        <i class="fas fa-user-circle me-1"></i>
+                        {{ user.get_full_name|default:user.username }}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="{% url 'password_change' %}"><i class="fas fa-key me-2"></i>Change Password</a></li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'profile' %}">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'password_change' %}">
+                                <i class="fas fa-key me-2"></i>Change Password
+                            </a>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form action="{% url 'logout' %}" method="post" class="d-inline">
                                 {% csrf_token %}
-                                <button type="submit" class="dropdown-item text-danger"><i class="fas fa-sign-out-alt me-2"></i>Logout</button>
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                </button>
                             </form>
                         </li>
                     </ul>
                 </li>
                 {% else %}
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'login' %}"><i class="fas fa-sign-in-alt me-1"></i> Login</a>
+                    <a class="nav-link" href="{% url 'login' %}">
+                        <i class="fas fa-sign-in-alt me-1"></i> Login
+                    </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link btn btn-outline-light btn-sm ms-2 px-3" href="{% url 'register' %}">Register</a>
+                    <a class="nav-link btn btn-outline-light btn-sm ms-2 px-3" href="{% url 'register' %}">
+                        Register
+                    </a>
                 </li>
                 {% endif %}
             </ul>
