@@ -164,3 +164,52 @@ class AssignComplaintForm(forms.ModelForm):
             profile__role__in=['staff', 'admin']
         ).select_related('profile')
         self.fields['assigned_to'].required = False
+
+
+class AddStaffForm(forms.Form):
+    """Admin-only form to create a new staff/admin member.
+
+    Creating a user here automatically makes them selectable in the
+    "Assigned To" dropdown on the complaint detail page, since that
+    dropdown is filtered to users whose Profile.role is 'staff' or 'admin'.
+    """
+    ROLE_CHOICES = [
+        ('staff', 'Staff'),
+        ('admin', 'Admin'),
+    ]
+
+    username = forms.CharField(
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'})
+    )
+    first_name = forms.CharField(
+        max_length=30, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First name'})
+    )
+    last_name = forms.CharField(
+        max_length=30, required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last name'})
+    )
+    email = forms.EmailField(
+        required=False,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'})
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Temporary password'})
+    )
+    role = forms.ChoiceField(
+        choices=ROLE_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    def clean_username(self):
+        username = self.cleaned_data['username']
+        if User.objects.filter(username=username).exists():
+            raise ValidationError('A user with this username already exists.')
+        return username
+
+    def clean_password(self):
+        password = self.cleaned_data['password']
+        if len(password) < 6:
+            raise ValidationError('Password must be at least 6 characters.')
+        return password

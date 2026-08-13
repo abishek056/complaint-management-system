@@ -23,7 +23,7 @@ import csv
 from .models import Complaint, Category, Profile, Comment, StatusHistory
 from .forms import (
     UserRegistrationForm, LoginForm, ComplaintForm, CategoryForm,
-    ProfileForm, CommentForm, AssignComplaintForm
+    ProfileForm, CommentForm, AssignComplaintForm, AddStaffForm
 )
 
 
@@ -144,7 +144,44 @@ class AdminDashboardView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['categories'] = Category.objects.annotate(
             complaint_count=Count('complaints')
         )
+        context['add_staff_form'] = AddStaffForm()
         return context
+
+    def post(self, request, *args, **kwargs):
+        if 'add_staff' in request.POST:
+            form = AddStaffForm(request.POST)
+            if form.is_valid():
+                user = User.objects.create_user(
+                    username=form.cleaned_data['username'],
+                    email=form.cleaned_data.get('email', ''),
+                    password=form.cleaned_data['password'],
+                    first_name=form.cleaned_data.get('first_name', ''),
+                    last_name=form.cleaned_data.get('last_name', ''),
+                )
+                Profile.objects.update_or_create(
+                    user=user, defaults={'role': form.cleaned_data['role']}
+                )
+                messages.success(
+                    request,
+                    f"{user.username} added as {form.cleaned_data['role']}. "
+                    f"They can now be picked in 'Assigned To'."
+                )
+            else:
+                first_error = next(iter(form.errors.values()))[0]
+                messages.error(request, f'Could not add member: {first_error}')
+            return redirect('admin_dashboard')
+
+        if 'remove_staff' in request.POST:
+            user_id = request.POST.get('user_id')
+            target = get_object_or_404(User, pk=user_id)
+            if target == request.user:
+                messages.error(request, "You can't remove yourself.")
+            else:
+                Profile.objects.filter(user=target).update(role='user')
+                messages.success(request, f'{target.username} is no longer staff/admin.')
+            return redirect('admin_dashboard')
+
+        return redirect('admin_dashboard')
 
 
 class ComplaintListView(LoginRequiredMixin, ListView):
@@ -269,21 +306,34 @@ class ComplaintDetailView(LoginRequiredMixin, DetailView):
         role = get_user_role(request.user)
 
         if 'comment_submit' in request.POST:
+            is_staff_or_admin = role in ('staff', 'admin') or request.user.is_superuser
+            # Normal users can no longer comment once their complaint is
+            # resolved - the thread is closed on their side. Staff/admin
+            # can still add notes after resolution.
+            if not is_staff_or_admin and self.object.status == 'resolved':
+                messages.error(request, 'This complaint is resolved and comments are closed.')
+                return redirect('complaint_detail', pk=self.object.pk)
             form = CommentForm(request.POST)
             if form.is_valid():
                 comment = form.save(commit=False)
                 comment.complaint = self.object
                 comment.author = request.user
-                if role not in ('staff', 'admin') and not request.user.is_superuser:
+                if not is_staff_or_admin:
                     comment.is_internal = False
                 comment.save()
                 messages.success(request, 'Comment added.')
             return redirect('complaint_detail', pk=self.object.pk)
 
         if 'assign_submit' in request.POST and (role in ('staff', 'admin') or request.user.is_superuser):
+            # Capture the CURRENT status BEFORE building/validating the form.
+            # form.is_valid() mutates self.object in-place with the submitted
+            # values (Django ModelForm _post_clean behavior), so reading
+            # self.object.status AFTER is_valid() always returns the NEW
+            # value - that was why old_status/new_status were always equal
+            # and the Timeline never got a new entry.
+            old_status = self.object.status
             form = AssignComplaintForm(request.POST, instance=self.object)
             if form.is_valid():
-                old_status = self.object.status
                 complaint = form.save()
                 new_status = complaint.status
                 if old_status != new_status:
@@ -487,3 +537,5 @@ class ExportComplaintsCSV(LoginRequiredMixin, UserPassesTestMixin, View):
                 c.updated_at.strftime('%Y-%m-%d %H:%M'),
             ])
         return response
+
+    
