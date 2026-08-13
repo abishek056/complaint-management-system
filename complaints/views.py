@@ -28,15 +28,13 @@ from .forms import (
 
 
 def get_user_role(user):
-    """Return the role string for a user."""
+    """Return the role string for a user, creating a Profile if missing."""
     if not user.is_authenticated:
         return None
     if user.is_superuser:
         return 'admin'
-    try:
-        return user.profile.role
-    except Profile.DoesNotExist:
-        return 'user'
+    profile, _ = Profile.objects.get_or_create(user=user, defaults={'role': 'user'})
+    return profile.role
 
 
 class HomeView(TemplateView):
