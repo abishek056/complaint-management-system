@@ -1,9 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Admin Dashboard - CMS{% endblock %}
+{% block title %}Dashboard - CMS{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h2 class="fw-bold mb-0"><i class="fas fa-chart-line me-2 text-primary"></i>Admin Dashboard</h2>
+    <h2 class="fw-bold mb-0">
+        <i class="fas fa-tachometer-alt me-2 text-primary"></i>
+        {% if role == 'staff' %}Staff Dashboard{% else %}My Dashboard{% endif %}
+    </h2>
+    {% if role != 'staff' %}
     <a href="{% url 'export_csv' %}" class="btn btn-outline-success"><i class="fas fa-file-csv me-1"></i> Export CSV</a>
+    {% endif %}
 </div>
 
 <div class="row g-3 mb-4">
@@ -44,28 +49,44 @@
 <div class="row g-4">
     <div class="col-md-4">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white"><h5 class="mb-0">By Priority</h5></div>
+            <div class="card-header bg-white"><h5 class="mb-0">Categories</h5></div>
             <div class="card-body">
-                <div class="d-flex justify-content-between mb-2"><span class="badge priority-high">High</span><strong>{{ by_priority.high }}</strong></div>
-                <div class="d-flex justify-content-between mb-2"><span class="badge priority-medium">Medium</span><strong>{{ by_priority.medium }}</strong></div>
-                <div class="d-flex justify-content-between"><span class="badge priority-low">Low</span><strong>{{ by_priority.low }}</strong></div>
+                {% for cat in categories %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{{ cat.name }}</span>
+                    <strong>{{ cat.count }}</strong>
+                </div>
+                {% empty %}
+                <p class="text-muted small mb-0">No categories yet.</p>
+                {% endfor %}
+                {% if rejected %}
+                <hr>
+                <div class="d-flex justify-content-between">
+                    <span class="badge bg-danger-subtle text-danger">Rejected</span>
+                    <strong>{{ rejected }}</strong>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
     <div class="col-md-8">
         <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white"><h5 class="mb-0">Recent Complaints</h5></div>
+            <div class="card-header bg-white">
+                <h5 class="mb-0">{% if role == 'staff' %}Assigned & Pending Complaints{% else %}My Recent Complaints{% endif %}</h5>
+            </div>
             <div class="table-responsive">
                 <table class="table table-sm table-hover mb-0">
-                    <thead><tr><th>ID</th><th>Title</th><th>Status</th><th>User</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Title</th><th>Status</th><th>Category</th></tr></thead>
                     <tbody>
-                        {% for c in recent %}
+                        {% for c in recent_complaints %}
                         <tr>
                             <td><a href="{% url 'complaint_detail' c.pk %}">{{ c.complaint_id }}</a></td>
                             <td>{{ c.title|truncatechars:30 }}</td>
                             <td><span class="badge status-{{ c.status }}">{{ c.get_status_display }}</span></td>
-                            <td>Complainant</td>
+                            <td>{{ c.category.name|default:"-" }}</td>
                         </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted py-3">No complaints yet.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
