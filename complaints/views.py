@@ -371,12 +371,14 @@ class ComplaintCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     template_name = 'complaints/complaint_form.html'
 
     def test_func(self):
-        # Admins manage/resolve complaints; they should not be able to
-        # register new complaints from their own account.
-        return get_user_role(self.request.user) != 'admin'
+        # Only regular users can submit complaints. Admins manage/resolve
+        # complaints and staff handle/resolve assigned complaints, so
+        # neither should be able to register new complaints from their
+        # own account.
+        return get_user_role(self.request.user) not in ('admin', 'staff')
 
     def handle_no_permission(self):
-        messages.error(self.request, 'Admins cannot submit new complaints.')
+        messages.error(self.request, 'Only regular users can submit new complaints.')
         return redirect('dashboard')
 
     def form_valid(self, form):
@@ -537,5 +539,3 @@ class ExportComplaintsCSV(LoginRequiredMixin, UserPassesTestMixin, View):
                 c.updated_at.strftime('%Y-%m-%d %H:%M'),
             ])
         return response
-
-    
