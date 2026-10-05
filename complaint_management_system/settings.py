@@ -19,7 +19,7 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -63,8 +63,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'complaint_management_system.wsgi.application'
 
-# Database
-# Use DATABASE_URL env var in production (Neon PostgreSQL), fallback to SQLite locally
+# Database configuration
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
@@ -76,10 +75,15 @@ if DATABASE_URL:
         )
     }
 else:
+    # On Vercel if DATABASE_URL is not provided, fallback to writable /tmp
+    if os.environ.get('VERCEL'):
+        db_path = Path('/tmp/db.sqlite3')
+    else:
+        db_path = BASE_DIR / 'db.sqlite3'
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': db_path,
         }
     }
 
@@ -102,12 +106,11 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# WhiteNoise static file compression & caching
+# WhiteNoise static configuration
+WHITENOISE_USE_FINDERS = True
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Media files (user uploads)
-# NOTE: On Vercel, media uploads won't persist between deployments.
-# For production, use a cloud storage service like AWS S3 or Cloudinary.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
